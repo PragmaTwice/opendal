@@ -334,6 +334,7 @@ impl kv::Adapter for Adapter {
             Capability {
                 read: true,
                 write: true,
+                list: true,
 
                 ..Default::default()
             },
@@ -363,5 +364,10 @@ impl kv::Adapter for Adapter {
         let mut conn = self.conn().await?;
         conn.append(key, value).await?;
         Ok(())
+    }
+
+    async fn scan(&self, path: &str) -> Result<Vec<String>> {
+        let mut conn = self.conn().await?;
+        conn.scan(path).await
     }
 }

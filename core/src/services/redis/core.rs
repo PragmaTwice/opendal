@@ -19,6 +19,7 @@ use crate::Buffer;
 use crate::Error;
 use crate::ErrorKind;
 
+use futures::StreamExt;
 use redis::aio::ConnectionLike;
 use redis::aio::ConnectionManager;
 
@@ -104,6 +105,26 @@ impl RedisConnection {
             }
         }
         Ok(())
+    }
+
+    pub async fn scan(&mut self, prefix: &str) -> crate::Result<Vec<String>> {
+        let pattern = format!("{}*", prefix);
+        Ok(match self {
+            RedisConnection::Normal(ref mut conn) => {
+                conn.scan_match(pattern)
+                    .await
+                    .map_err(format_redis_error)?
+                    .collect()
+                    .await
+            }
+            RedisConnection::Cluster(ref mut conn) => {
+                conn.scan_match(pattern)
+                    .await
+                    .map_err(format_redis_error)?
+                    .collect()
+                    .await
+            }
+        })
     }
 }
 
